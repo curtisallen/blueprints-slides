@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+	<meta name="viewport" content="width=1024, user-scalable=no">
+
+	<title>Your deck.js Presentation</title>
+	
+	<!-- Required stylesheet -->
+	<link rel="stylesheet" href="core/deck.core.css">
+	
+	<!-- Extension CSS files go here. Remove or add as needed. -->
+	<link rel="stylesheet" href="extensions/goto/deck.goto.css">
+	<link rel="stylesheet" href="extensions/menu/deck.menu.css">
+	<link rel="stylesheet" href="extensions/navigation/deck.navigation.css">
+	<link rel="stylesheet" href="extensions/status/deck.status.css">
+	<link rel="stylesheet" href="extensions/hash/deck.hash.css">
+	<link rel="stylesheet" href="extensions/scale/deck.scale.css">
+    <!--<link rel="stylesheet" href="extensions/cube/cube.css">-->
+    <!-- Pretify -->
+    <script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+
+	<!-- Style theme. More available in /themes/style/ or create your own. -->
+	<link rel="stylesheet" href="themes/style/web-2.0.css">
+    <!--<link rel="stylesheet" href="themes/style/neon.css">-->
+	
+	<!-- Transition theme. More available in /themes/transition/ or create your own. -->
+	<link rel="stylesheet" href="themes/transition/horizontal-slide.css">
+	
+	<!-- Required Modernizr file -->
+	<script src="modernizr.custom.js"></script>
+</head>
+<body class="deck-container">
+
+<!-- Begin slides. Just make elements with a class of slide. -->
+
+<section class="slide">
+	<h1>Generic Object API</h1>
+</section>
+
+<section class="slide">
+	<h2>Requirements</h2>
+    <ul>
+        <li class="slide">Make a generic object API that doesn't care about the actual data store</li>
+        <li class="slide">Should make widgets and business logic decoupled from object implementation</li>
+        <li class="slide">Should provide a "template/schema" for objects</li>
+        <li class="slide">Should be simple</li>
+    </ul>
+</section>
+
+<section class="slide">
+	<h2>Enter Blueprints</h2>
+    <img src="images/blueprints-logo.png">
+    <ul>
+        <li>
+            <small>Blueprints is a collection of interfaces, implementations, and test suites for the property graph data model. <strong>Blueprints is analogous to the JDBC, but for graph databases.</strong></small>
+        </li>
+    </ul>
+</section>
+
+<section class="slide">
+    <h2>Blueprints</h2>
+    <h3>What does blueprints do for you?</h3>
+    <ul>
+        <li>
+            Provides standard interface into and out of a Object (Graph) Store
+        </li>
+        <li>
+            Can easily swap out data store providers
+        </li>
+        <li>
+            Fundamental building block for the rest of the Tinker Pop stack
+            <img src="images/rexster-system-arch.png">
+        </li>
+    </ul>
+</section>
+
+<section class="slide">
+    <h2>Example</h2>
+    <p>Simple Object API</p>
+    <pre class="prettyprint linenums">
+Graph graph = new UomGraph();
+Vertex a = graph.addVertex(null);
+Vertex b = graph.addVertex(null);
+a.setProperty("name","marko");
+b.setProperty("name","peter");
+Edge e = graph.addEdge(null, a, b, "knows");
+e.setProperty("since", 2006);
+graph.shutdown();
+    </pre>
+    <ul>
+        <li>
+            <small>Vertex = Object</small>
+        </li>
+        <li>
+            <small>Edge = Relationship</small>
+        </li>
+    </ul>
+</section>
+
+<section class="slide">
+    <h2>What about Object Templates?</h2>
+    <p class="slide">
+        <img src="images/frames-logo.png">
+        Frames allows you to interact with <strong>Objects</strong> defined by <strong>Schemas</strong>
+    </p>
+</section>
+
+<section class="slide">
+    <h2>Frames</h2>
+    <p>Frames are defined by objects with simple interfaces</p>
+    <pre class="prettyprint">
+public interface Person {
+    @Property("name")
+    public String getName();
+
+    @Property("name")
+    public void setName(String name);
+}
+    </pre>
+</section>
+
+<section class="slide">
+    <h2>Frames</h2>
+    <p>Interact with Frames as POJOs</p>
+    <pre class="prettyprint">
+Person person = framedGraph.getVertex(1, Person.class);
+person.setName("Curtis");
+// Passing Test
+assertTrue("Curtis",person.getName());
+    </pre>
+</section>
+
+<section class="slide">
+    <h2>Sample Graph</h2>
+    <img src="images/graph-example-1.jpg">
+</section>
+<section class="slide">
+    <h2>Frames can define query patterns for Objects</h2>
+    <pre class="prettyprint linenums slide">
+<p class="slide">public interface Person {
+    @Adjacency(label="knows")
+    public void addKnowsPerson(final Person person);
+    @GremlinGroovy(value = "it.outE('knows').inV.has('name', name).hasNext()", frame= false)
+    public boolean isRelatedTo(@GremlinParam("name") String name);
+}</p>
+<p class="slide">Person curtis = framedGraph.addVertex(13, Person.class);
+curtis.setName("Curtis");</p>
+<p class="slide">Person marko = framedGraph.getVertex(1, Person.class);
+marko.addKnowsPerson(curtis);
+Assert.assertEquals(true,marko.isRelatedTo("Curtis"));</p>
+    </pre>
+</section>
+<section class="slide">
+    <h2>Frames simplify things</h2>
+    <ul>
+        <li>
+            Notice that with frames we are dealing with defined POJOs not Generic objects
+            e.g
+            <pre class="prettyprint slide">
+Vertex a = graph.addVertex(null);
+Vertex b = graph.addVertex(null);
+a.setProperty("name","marko");
+b.setProperty("name","peter");
+Edge e = graph.addEdge(null, a, b, "knows");
+            </pre>
+            <p class="slide">Becomes</p>
+            <pre class="prettyprint slide">
+Person a = framedGraph.addVertex(null, Person.class);
+Person b = framedGraph.addVertex(null, Person.class);
+a.setName("marko");
+b.setName("peter");
+a.addKnowsPerson(b);
+            </pre>
+        </li>
+    </ul>
+</section>
+<section class="slide">
+    <h2>Frames for Edges</h2>
+    <small>We've been using frames for vertices. We can also use them for Edges.</small>
+    <pre class="prettyprint slide">
+public interface Knows {
+
+    @Property("weight")
+    public Float getWeight();
+
+    @Property("weight")
+    public Float setWeight(float weight);
+
+    @Domain
+    public Person getDomain();
+
+    @Range
+    public Person getRange();
+}
+    </pre>
+</section>
+<section class="slide">
+    <h2>We reference edges just like vertices</h2>
+    <pre class="prettyprint slide">
+Person marko = framedGraph.getVertex(1, Person.class);
+Person vadas = framedGraph.getVertex(2, Person.class);
+Knows knows = framedGraph.getEdge(7, Direction.OUT, Knows.class);
+assertEquals(marko, knows.getDomain());
+assertEquals(vadas, knows.getRange());
+    </pre>
+</section>
+<section class="slide">
+    <h2>Rexter</h2>
+    <h3>Extendable REST layer built on blueprints</h3>
+    <img src="images/rexster-logo.png">
+</section>
+<section class="slide">
+    <h2>Rexter</h2>
+    <pre class="prettyprint">
+http://localhost:8182/graphs/tinkergraph/vertices/1
+    </pre>
+
+    <pre class="prettyprint">
+{
+  "version":"*.*",
+  "results": {
+    "_type":"vertex",
+    "_id":"1",
+    "name":"marko",
+    "age":29
+  },
+  "queryTime":0.12351
+}
+    </pre>
+</section>
+<section class="slide">
+    <h2>Rexter</h2>
+    <h3>Comes with a webapp (Doghouse)</h3>
+    <img class="slide" src="images/rexter-screenshot.png">
+</section>
+<section class="slide">
+    <h2>Rexter</h2>
+    <h3>Comes with a webapp (Doghouse)</h3>
+    <img src="images/rexter-viz-screenshot.png">
+</section>
+<section class="slide">
+    <h2>The Stack</h2>
+    <img src="images/rexster-system-arch.png">
+</section>
+<section class="slide">
+    <h2>Implementations</h2>
+    <ul>
+        <li>TinkerGraph (In memory store good for testing)</li>
+        <li>Neo4j</li>
+        <li>Sail</li>
+        <li>OrientDB</li>
+        <li>Titan</li>
+        <li>MongoDB</li>
+    </ul>
+    <small><a href="https://github.com/tinkerpop/blueprints/wiki">Plus many many more</a></small>
+</section>
+<!-- End slides. -->
+
+
+<!-- Begin extension snippets. Add or remove as needed. -->
+
+<!-- deck.navigation snippet -->
+<a href="#" class="deck-prev-link" title="Previous">&#8592;</a>
+<a href="#" class="deck-next-link" title="Next">&#8594;</a>
+
+<!-- deck.status snippet -->
+<p class="deck-status">
+	<span class="deck-status-current"></span>
+	/
+	<span class="deck-status-total"></span>
+</p>
+
+<!-- deck.goto snippet -->
+<form action="." method="get" class="goto-form">
+	<label for="goto-slide">Go to slide:</label>
+	<input type="text" name="slidenum" id="goto-slide" list="goto-datalist">
+	<datalist id="goto-datalist"></datalist>
+	<input type="submit" value="Go">
+</form>
+
+<!-- deck.hash snippet -->
+<a href="." title="Permalink to this slide" class="deck-permalink">#</a>
+
+<!-- End extension snippets. -->
+
+
+<!-- Required JS files. -->
+<script src="jquery-1.7.2.min.js"></script>
+<script src="core/deck.core.js"></script>
+
+<!-- Extension JS files. Add or remove as needed. -->
+<script src="core/deck.core.js"></script>
+<script src="extensions/hash/deck.hash.js"></script>
+<script src="extensions/menu/deck.menu.js"></script>
+<script src="extensions/goto/deck.goto.js"></script>
+<script src="extensions/status/deck.status.js"></script>
+<script src="extensions/navigation/deck.navigation.js"></script>
+<script src="extensions/scale/deck.scale.js"></script>
+
+<!-- Initialize the deck. You can put this in an external file if desired. -->
+<script>
+	$(function() {
+		$.deck('.slide');
+	});
+</script>
+</body>
+</html>
